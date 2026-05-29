@@ -110,7 +110,7 @@ void watchdogDaemon(ResourceManager* rm) {
         auto deadlocks = rm->detectDeadlocks();
         
         for (const auto& cycle : deadlocks) {
-            cout << "\n========================================\n";
+        
             cout << "[WATCHDOG] DEADLOCK DETECTED! Threads involved: ";
             for (int t : cycle) cout << t << " ";
             cout << "\n";
@@ -127,7 +127,7 @@ void watchdogDaemon(ResourceManager* rm) {
             }
             
             cout << "[REAPER] Terminating Thread " << victim << " to break cycle.\n";
-            cout << "========================================\n\n";
+          
             
             rm->killAndRecover(victim);
         }
