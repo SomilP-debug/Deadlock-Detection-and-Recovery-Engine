@@ -7,7 +7,7 @@
 
 A deterministic, multithreaded Virtual Machine written in C++ that bridges the gap between Operating Systems theory and low-level systems programming. 
 
-This project simulates how modern operating systems and distributed backend architectures natively manage resource contention. The engine parses concurrent workloads, dynamically hunts for resource deadlocks using graph theory, and guarantees workload completion through a self-healing rollback mechanism.
+This project simulates how operating systems can natively manage resource contention. The engine parses concurrent workloads, dynamically hunts for resource deadlocks using graph theory, and guarantees workload completion through a self-healing rollback mechanism.
 
 ## ✨ Key Features
 
