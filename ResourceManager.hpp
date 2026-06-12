@@ -19,6 +19,7 @@ private:
 
     mutex mtx;
     condition_variable cv;
+    
 
     void tarjanDFS(int u, vector<int>& adj, vector<int>& ids, 
                    vector<int>& low, stack<int>& st, 
@@ -54,6 +55,10 @@ private:
     }
 
 public:
+    
+     condition_variable watchdog_cv;
+    mutex watchdog_mtx;
+    bool suspicion_of_deadlock = false;
     ResourceManager(int n, int m) : num_threads(n), num_resources(m) {
         assignedTo.assign(num_resources, -1);
         waitingFor.assign(num_threads, -1);
@@ -66,6 +71,11 @@ public:
         
         while (assignedTo[r_id] != -1 && assignedTo[r_id] != t_id && !killed[t_id]) {
             waitingFor[t_id] = r_id;
+            {
+                lock_guard<mutex> w_lock(watchdog_mtx);
+                suspicion_of_deadlock = true;
+            }
+            watchdog_cv.notify_one();
             cv.wait(lock);
         }
 
@@ -126,6 +136,7 @@ public:
     }
 
     int getKillCount(int t_id) {
+        lock_guard<mutex> lock(mtx);
         return kill_count[t_id];
     }
     
@@ -133,5 +144,9 @@ public:
         lock_guard<mutex> lock(mtx);
         killed[t_id] = false;
         waitingFor[t_id] = -1;
+    }
+    void shutdown() {
+        watchdog_cv.notify_one(); 
+        cv.notify_all(); 
     }
 };

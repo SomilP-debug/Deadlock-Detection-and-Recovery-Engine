@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <atomic>
 #include "ResourceManager.hpp"
 using namespace std;
 
@@ -17,7 +18,7 @@ struct Command {
     int value;
 };
 
-bool system_running = true;
+atomic<bool> system_running{true};
 map<int, vector<Command>> workloads;
 int max_thread_id = 0;
 int max_resource_id = 0;
@@ -105,8 +106,20 @@ void workerProcess(int t_id, ResourceManager* rm, const vector<Command>& script)
 
 void watchdogDaemon(ResourceManager* rm) {
     while (system_running) {
-        this_thread::sleep_for(chrono::milliseconds(500));
         
+        {
+            unique_lock<mutex> w_lock(rm->watchdog_mtx);
+
+            rm->watchdog_cv.wait(w_lock, [&rm]{ 
+                return rm->suspicion_of_deadlock || !system_running; 
+            });
+            
+            if (!system_running) break;
+
+            rm->suspicion_of_deadlock = false;
+        }
+      
+
         auto deadlocks = rm->detectDeadlocks();
         
         for (const auto& cycle : deadlocks) {
@@ -128,7 +141,6 @@ void watchdogDaemon(ResourceManager* rm) {
             
             cout << "[REAPER] Terminating Thread " << victim << " to break cycle.\n";
           
-            
             rm->killAndRecover(victim);
         }
     }
@@ -156,6 +168,7 @@ int main() {
     this_thread::sleep_for(chrono::seconds(5));
     
     system_running = false;
+    rm.shutdown();
     for (auto& t : threads) {
         if (t.joinable()) t.join();
     }
