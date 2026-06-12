@@ -13,8 +13,10 @@ This project simulates how operating systems can natively manage resource conten
 
 * **Config-Driven Virtual Machine:** Dynamically parses and executes multithreaded transaction scripts (`LOCK`, `UNLOCK`, `SLEEP`) from a text file, allowing for rapid testing of complex concurrency traps and race conditions.
 * **$O(V+E)$ Cycle Detection:** Utilizes an asynchronous Watchdog Daemon running **Tarjan’s Strongly Connected Components (SCC)** algorithm. It continuously builds Resource Allocation Graphs (RAG) to hunt for dependency cycles in real-time.
+* **Lazy-Evaluated Deadlock Detection:** The Watchdog Daemon operates at 0% CPU overhead, waking via `std::condition_variable` triggers *only* when a worker thread experiences a blocked resource request.
 * **Smart Reaper Protocol (Thread Aging):** Resolves deadlocks by tracking a `kill_count` (Aging/Priority metric) for each thread. When a cycle is detected, the engine targets the youngest, least-aborted thread to break the cycle, mathematically preventing **Thread Starvation**.
 * **Self-Healing Workloads:** When a thread is terminated, its held resources are forcefully rolled back (`std::condition_variable` notifications). The aborted thread is placed in a penalty delay before automatically restarting its workload from Step 0, ensuring no tasks are permanently lost.
+* **Zero Data-Race Design:** Built with strict C++ RAII lock scoping (`std::unique_lock`, `std::lock_guard`) and `std::atomic` states to handle massive concurrency without undefined behavior.
 
 ## 🏗️ Architecture & Cycle Detection
 
